@@ -9,7 +9,15 @@ class UserService extends Service {
      * @param {*} obj 
      */
     async add(obj) {
-
+        return await this.app.mysql.insert('app_user', {
+            account: obj.account,
+            password: obj.password,
+            name: obj.name,
+            create_time: Date.now(),
+            role: obj.role,
+            phone: obj.phone,
+            organization_id: obj.organization_id,
+        });
     }
 
     /**
@@ -17,7 +25,7 @@ class UserService extends Service {
      * @param {*} obj 
      */
     async update(obj) {
-
+        return await this.app.mysql.update('app_user', obj);
     }
 
     /**
@@ -25,21 +33,25 @@ class UserService extends Service {
      * @param {*} id 
      */
     async delete(id) {
-
+        return this.app.mysql.delete('app_user', { id });
     }
     /**
      * 根据id查询用户信息
      * @param {*} id 用户id
      */
     async find(id) {
-
+        return await this.app.mysql.select('app_user',{
+            where: { id },
+            limit: 10,
+            offset: 0
+        })
     }
     /**
      * 
      * @param {*} page 
      */
     async list(page = 1, pageSize = 10) {
-        return await this.app.mysql.select('course',{
+        return await this.app.mysql.select('app_user',{
             limit: 10,
             offset: 0
         })
@@ -50,7 +62,7 @@ class UserService extends Service {
      */
     async login(user = {account: '', password: ''}) {
         // 通过用户名查询用户信息
-        return await this.app.mysql.select('course',{
+        return await this.app.mysql.select('app_user',{
             limit: 10,
             offset: 0
         })
