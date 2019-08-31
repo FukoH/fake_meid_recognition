@@ -2,7 +2,7 @@ const Controller = require('egg').Controller;
 
 class UserController extends Controller {
     async login() {
-        let {account, password} = this.ctx.query
+        let {account, password} = this.ctx.request.body
         this.ctx.body = await this.ctx.service.user.login({account, password})
     }
     async find() {

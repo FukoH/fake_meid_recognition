@@ -5,7 +5,7 @@ const Service = require('egg').Service;
  */
 class ProofService extends Service {
     /**
-     * 添加用户信息
+     * 生成凭证
      * @param {*} obj 
      */
     async add(obj) {
@@ -13,21 +13,14 @@ class ProofService extends Service {
     }
 
     /**
-     * 修改用户信息
+     * 更新凭证状态
      * @param {*} obj 
      */
     async update(obj) {
 
     }
     /**
-     * 根据id查询用户信息
-     * @param {*} id 用户id
-     */
-    async find(id) {
-
-    }
-    /**
-     * 
+     * 查询凭证列表
      * @param {*} page 
      */
     async list(page = 1, pageSize = 10) {
