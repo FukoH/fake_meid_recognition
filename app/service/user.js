@@ -53,7 +53,7 @@ class UserService extends Service {
             let res = await this.app.mysql.delete('app_user', { id });
             return createResponse('', res.affectedRows === 1, res.affectedRows === 1 ? '' : '删除用户数据失败：用户不存在');
         } catch (err) {
-            return createResponse(null, false, '更新用户数据失败:' + err);
+            return createResponse(null, false, '删除用户数据失败:' + err);
         }
     }
     /**
@@ -74,10 +74,10 @@ class UserService extends Service {
      * 
      * @param {*} page 
      */
-    async list({page = 0, pageSize = 10}) {
+    async list({page = 0, pageSize = 10, ...queryParams}) {
         try {
-            console.log(page, pageSize)
             let res = await await this.app.mysql.select('app_user',{
+                where: queryParams,
                 limit: 10,
                 offset: page * pageSize,
             })
