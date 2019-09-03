@@ -17,6 +17,11 @@ module.exports = app => {
   router.delete('/user/:id', controller.user.delete)
   // 凭证
   // 串码
-  // 平台信息
+  // 组织信息
+  router.get('/organization/:id', controller.organization.find)
+  router.get('/organization', controller.organization.list)
+  router.post('/organization', controller.organization.add)
+  router.put('/organization', controller.organization.update)
+  router.delete('/organization/:id', controller.organization.delete)
   // 数据统计
 };

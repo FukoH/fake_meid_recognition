@@ -103,5 +103,28 @@ class UserService extends Service {
             return createResponse(null, false, '登陆失败:' + err);
         }
     }
+    /**
+     * 修改个人密码
+     * @param {*} obj 
+     */
+    async update(obj) {
+        try {
+            // 查询用户当前id
+            let list = await this.app.mysql.select('app_user', {
+                where: {id: obj.id}
+            });
+            if (list[0].password === obj.originalPwd && obj.newPassword === obj.confirmPassword) {
+                let res = await this.app.mysql.update('app_user', {
+                    id: obj.id,
+                    password: obj.newPassword
+                });
+                return createResponse('', res.affectedRows === 1, res.affectedRows === 1 ? '' : '更新密码失败：用户不存在');
+            } else {
+                return createResponse('', false, '更新密码失败：密码不匹配');
+            }
+        } catch (err) {
+            return createResponse(null, false, '更新密码失败:' + err);
+        }
+    }
 }
 module.exports = UserService;

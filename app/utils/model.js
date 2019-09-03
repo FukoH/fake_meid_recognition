@@ -19,7 +19,7 @@ function handleDBData(data) {
 /**
  * 生成统一的响应数据结果
  */
-function createResponse(data, success=true, errMsg='') {
+function createResponse(data, success = true, errMsg = '') {
     return {
         data,
         success,
