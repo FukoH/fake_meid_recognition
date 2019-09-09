@@ -16,6 +16,11 @@ module.exports = app => {
   router.put('/user', controller.user.update)
   router.delete('/user/:id', controller.user.delete)
   // 凭证
+  router.get('/credential/:id', controller.credential.find)
+  router.get('/credential', controller.credential.list)
+  router.post('/credential', controller.credential.add)
+  router.put('/credential', controller.credential.update)
+  router.delete('/credential/:id', controller.credential.delete)
   // 串码
   // 组织信息
   router.get('/organization/:id', controller.organization.find)

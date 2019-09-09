@@ -19,21 +19,22 @@ class CredentialService extends Service {
     async add(obj) {
         let conn = await this.app.mysql.beginTransaction();
         try {
-            let res = await this.app.mysql.insert('app_credential', {
+            let res = await conn.insert('app_credential', {
                 organization_id: obj.organizationId,
                 money: obj.money,
                 status: STATUS.NEW,
                 create_time: Date.now(),
                 create_user: obj.userId,
             });
-            // throw new Error()
             let credential_id = res.insertId
             let promises = []
             obj.recognitions.forEach(item => {
-                promises.push(this.app.mysql.insert('app_credential_recognition', {
-                    credential_id
+                promises.push(conn.insert('app_credential_recognition', {
+                    credential_id,
+                    ...item,
                 }));
-            })
+            });
+            // 执行玩所有内容
             await Promise.all(promises);
             conn.commit();
             return createResponse(res.insertId);
@@ -63,7 +64,7 @@ class CredentialService extends Service {
      * 查询凭证列表
      * @param {*} page 
      */
-    async list({page = 1, pageSize = 10, ...queryParams}) {
+    async list({page = 0, pageSize = 10, ...queryParams}) {
         try {
             let res = await await this.app.mysql.select('app_credential', {
                 where: queryParams,
@@ -76,14 +77,36 @@ class CredentialService extends Service {
         }
     }
     /**
+     * 根据id查询凭证信息
+     * @param {*} id 用户id
+     */
+    async find(id) {
+        try {
+            // 查询凭证信息和凭证下的串码信息
+            let res = await this.app.mysql.select('app_credential',{
+                where: { id }
+            })
+            return createResponse(res[0]);
+        } catch (err) {
+            return createResponse(null, false, '查询凭证数据失败:' + err);
+        }
+    }
+    /**
      * 删除凭证信息
      * @param {*} id 凭证id
      */
     async delete(id) {
+        let conn = await this.app.mysql.beginTransaction();
         try {
-            let res = await this.app.mysql.delete('app_credential', { id });
+            let res = await conn.delete('app_credential', { id });
+            // 删除掉关联的凭证串码信息
+            await conn.delete('app_credential_recognition', { 
+                credential_id: id,
+            });
+            conn.commit();
             return createResponse('', res.affectedRows === 1, res.affectedRows === 1 ? '' : '删除凭证数据失败：凭证不存在');
         } catch (err) {
+            conn.rollback();
             return createResponse(null, false, '删除凭证数据失败:' + err);
         }
     }
