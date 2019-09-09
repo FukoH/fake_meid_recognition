@@ -23,15 +23,17 @@ class CredentialService extends Service {
                 organization_id: obj.organizationId,
                 money: obj.money,
                 status: STATUS.NEW,
-                create_time: Date.now(),
+                create_time: this.app.mysql.literals.now,
                 create_user: obj.userId,
             });
             let credential_id = res.insertId
-            let promises = []
+            let promises = [];
+            // 时间类型需要转换后处理
             obj.recognitions.forEach(item => {
                 promises.push(conn.insert('app_credential_recognition', {
                     credential_id,
                     ...item,
+                    period: item.period ? new this.app.mysql.literals.Literal(`str_to_date(${item.period}, 'Y%-m%-d%')`): '',
                 }));
             });
             // 执行玩所有内容

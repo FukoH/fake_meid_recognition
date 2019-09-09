@@ -20,7 +20,7 @@ class UserService extends Service {
                 account: obj.account,
                 password: obj.password,
                 name: obj.name,
-                create_time: Date.now(),
+                create_time: this.app.mysql.literals.now,
                 role: obj.role,
                 phone: obj.phone,
                 organization_id: obj.organization_id,
