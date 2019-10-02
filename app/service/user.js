@@ -1,5 +1,5 @@
 const Service = require('egg').Service;
-const createResponse = require('../utils/model.js').createResponse
+const {createResponse, createSQL} = require('../utils/model.js')
 /**
  * 用户相关Service
  */
@@ -23,7 +23,7 @@ class UserService extends Service {
                 create_time: this.app.mysql.literals.now,
                 role: obj.role,
                 phone: obj.phone,
-                organization_id: obj.organization_id,
+                organization_id: obj.organizationId,
             });
             return createResponse(res.insertId, res.affectedRows === 1, res.affectedRows === 1 ? '' : '创建用户数据失败');
         } catch (err) {
@@ -37,7 +37,15 @@ class UserService extends Service {
      */
     async update(obj) {
         try {
-           let res = await this.app.mysql.update('app_user', obj);
+            console.log(obj)
+           let res = await this.app.mysql.update('app_user', {
+                id: obj.id,
+                account: obj.account,
+                name: obj.name,
+                role: obj.role,
+                phone: obj.phone,
+                organization_id: obj.organizationId,
+            });
            return createResponse('', res.affectedRows === 1, res.affectedRows === 1 ? '' : '更新用户数据失败：用户不存在');
         } catch (err) {
             return createResponse(null, false, '更新用户数据失败:' + err);
@@ -54,6 +62,22 @@ class UserService extends Service {
             return createResponse('', res.affectedRows === 1, res.affectedRows === 1 ? '' : '删除用户数据失败：用户不存在');
         } catch (err) {
             return createResponse(null, false, '删除用户数据失败:' + err);
+        }
+    }
+    /**
+     * 批量删除用户数据
+     * @param {*} obj 
+     */
+    async batchDelete(obj) {
+        try {
+            if (obj.ids) {
+                let res = await this.app.mysql.query(`delete from app_user where id in(${obj.ids.join(',')})`)
+                return createResponse('', res.affectedRows === obj.ids.length, res.affectedRows === obj.ids.length ? '' : '批量删除失败');
+            } else {
+                return createResponse('', false, '批量删除失败');
+            }
+        } catch (err) {
+            return createResponse(null, false, '批量删除失败:' + err);
         }
     }
     /**
@@ -76,12 +100,20 @@ class UserService extends Service {
      */
     async list({page = 0, pageSize = 10, ...queryParams}) {
         try {
-            let res = await await this.app.mysql.select('app_user',{
-                where: queryParams,
-                limit: 10,
-                offset: page * pageSize,
+            let total = await this.app.mysql.count('app_user',{
+                ...queryParams,
             })
-            return createResponse(res);
+            let sql = createSQL('select au.*, ao.name as organizationName, ao.id as organizationId from app_user au left join app_organization ao on au.organization_id = ao.id', {
+                where: queryParams,
+                limit: pageSize,
+                offset: page * pageSize,
+                like: ['name', 'account'],
+                alias: {'name': 'au.name', 'account': 'au.account'},
+                order: ['au.create_time desc']
+            });
+            console.log(sql);
+            let res = await this.app.mysql.query(sql);
+            return createResponse({list: res, pagination: {currentPage: page, pageSize: pageSize, total}});
         } catch (err) {
             return createResponse(null, false, '查询用户数据失败:' + err);
         }
@@ -107,7 +139,7 @@ class UserService extends Service {
      * 修改个人密码
      * @param {*} obj 
      */
-    async update(obj) {
+    async updatePwd(obj) {
         try {
             // 查询用户当前id
             let list = await this.app.mysql.select('app_user', {

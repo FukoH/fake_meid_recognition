@@ -1,5 +1,5 @@
 const Service = require('egg').Service;
-const createResponse = require('../utils/model.js').createResponse
+const {createResponse, createSQL} = require('../utils/model.js')
 
 /**
  * 平台信息Service
@@ -58,12 +58,18 @@ class OrganizationService extends Service {
      */
     async list({page = 0, pageSize = 10, ...queryParams}) {
         try {
-            let res = await await this.app.mysql.select('app_organization',{
-                where: queryParams,
-                limit: 10,
-                offset: page * pageSize,
+            let total = await this.app.mysql.count('app_organization',{
+                ...queryParams,
             })
-            return createResponse(res);
+            let sql = createSQL('select * from app_organization', {
+                where: queryParams,
+                limit: pageSize,
+                offset: page * pageSize,
+                like: ['name'],
+            });
+            console.log(sql);
+            let res = await this.app.mysql.query(sql);
+            return createResponse({list: res, pagination: {currentPage: page, pageSize: pageSize, total}});
         } catch (err) {
             return createResponse(null, false, '查询组织数据失败:' + err);
         }

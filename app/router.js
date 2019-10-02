@@ -15,6 +15,7 @@ module.exports = app => {
   router.post('/user', controller.user.add)
   router.put('/user', controller.user.update)
   router.delete('/user/:id', controller.user.delete)
+  router.put('/user/batchDelete', controller.user.batchDelete)
   // 凭证
   router.get('/credential/:id', controller.credential.find)
   router.get('/credential', controller.credential.list)

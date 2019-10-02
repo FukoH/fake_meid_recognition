@@ -21,6 +21,10 @@ class UserController extends Controller {
         let {id} = this.ctx.params
         this.ctx.body = await this.ctx.service.user.delete(id)
     }
+    async batchDelete() {
+        let body = this.ctx.request.body
+        this.ctx.body = await this.ctx.service.user.batchDelete(body)
+    }
     async update() {
         let body = this.ctx.request.body
         this.ctx.body = await this.ctx.service.user.update(body)
