@@ -29,6 +29,10 @@ class UserController extends Controller {
         let body = this.ctx.request.body
         this.ctx.body = await this.ctx.service.user.update(body)
     }
+    async resetPwd () {
+        let body = this.ctx.request.body
+        this.ctx.body = await this.ctx.service.user.resetPwd(body)
+    }
     async updatePwd () {
         let body = this.ctx.request.body
         this.ctx.body = await this.ctx.service.user.updatePwd(body)

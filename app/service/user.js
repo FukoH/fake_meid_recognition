@@ -23,7 +23,7 @@ class UserService extends Service {
                 create_time: this.app.mysql.literals.now,
                 role: obj.role,
                 phone: obj.phone,
-                organization_id: obj.organizationId,
+                organization_id: obj.organization_id,
             });
             return createResponse(res.insertId, res.affectedRows === 1, res.affectedRows === 1 ? '' : '创建用户数据失败');
         } catch (err) {
@@ -44,7 +44,7 @@ class UserService extends Service {
                 name: obj.name,
                 role: obj.role,
                 phone: obj.phone,
-                organization_id: obj.organizationId,
+                organization_id: obj.organization_id,
             });
            return createResponse('', res.affectedRows === 1, res.affectedRows === 1 ? '' : '更新用户数据失败：用户不存在');
         } catch (err) {
@@ -103,7 +103,7 @@ class UserService extends Service {
             let total = await this.app.mysql.count('app_user',{
                 ...queryParams,
             })
-            let sql = createSQL('select au.*, ao.name as organizationName, ao.id as organizationId from app_user au left join app_organization ao on au.organization_id = ao.id', {
+            let sql = createSQL('select au.*, ao.name as organization_name, ao.id as organization_id from app_user au left join app_organization ao on au.organization_id = ao.id', {
                 where: queryParams,
                 limit: pageSize,
                 offset: page * pageSize,
@@ -130,7 +130,11 @@ class UserService extends Service {
                     account: user.account
                 }
             })
-            return createResponse('', res[0].password === user.password, res[0].password === user.password ? '' : '登陆失败:账号名和密码不匹配')
+            if (res.length == 1 && res[0].password === user.password) {
+                return createResponse(res[0])
+            } else {
+                return createResponse('', false, '登陆失败:账号名和密码不匹配')
+            }
         } catch (err) {
             return createResponse(null, false, '登陆失败:' + err);
         }
@@ -156,6 +160,22 @@ class UserService extends Service {
             }
         } catch (err) {
             return createResponse(null, false, '更新密码失败:' + err);
+        }
+    }
+    /**
+     * 重置个人密码
+     * @param {*} obj 
+     */
+    async resetPwd(obj) {
+        try {
+            // 存在数据信息，则重置密码
+            let res = await this.app.mysql.update('app_user', {
+                id: obj.id,
+                password: '123456'
+            });
+            return createResponse('', res.affectedRows === 1, res.affectedRows === 1 ? '' : '重置密码成功：用户不存在');
+        } catch (err) {
+            return createResponse(null, false, '重置密码成功:' + err);
         }
     }
 }

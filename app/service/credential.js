@@ -7,7 +7,7 @@ const STATUS = {
     APPEAL_REFUSE: 4, // 申诉已拒绝
     FILE: 5, // 凭证已归档
 }
-const createResponse = require('../utils/model.js').createResponse
+const {createResponse, createSQL} = require('../utils/model.js')
 /**
  * 凭证相关Service
  */
@@ -20,24 +20,28 @@ class CredentialService extends Service {
         let conn = await this.app.mysql.beginTransaction();
         try {
             let res = await conn.insert('app_credential', {
-                organization_id: obj.organizationId,
+                organization_id: obj.organization_id,
                 money: obj.money,
                 status: STATUS.NEW,
                 create_time: this.app.mysql.literals.now,
                 create_user: obj.userId,
+                description: obj.description,
+                credential_no: obj.credential_no
             });
-            let credential_id = res.insertId
-            let promises = [];
-            // 时间类型需要转换后处理
-            obj.recognitions.forEach(item => {
-                promises.push(conn.insert('app_credential_recognition', {
-                    credential_id,
-                    ...item,
-                    period: item.period ? new this.app.mysql.literals.Literal(`str_to_date(${item.period}, 'Y%-m%-d%')`): '',
-                }));
-            });
-            // 执行玩所有内容
-            await Promise.all(promises);
+            if (obj.recognitions) {
+                let credential_id = res.insertId
+                let promises = [];
+                // 时间类型需要转换后处理
+                obj.recognitions.forEach(item => {
+                    promises.push(conn.insert('app_credential_recognition', {
+                        credential_id,
+                        ...item,
+                        period: item.period ? new this.app.mysql.literals.Literal(`str_to_date(${item.period}, 'Y%-m%-d%')`): '',
+                    }));
+                });
+                // 执行玩所有内容
+                await Promise.all(promises);
+            }
             conn.commit();
             return createResponse(res.insertId);
         } catch (err) {
@@ -68,12 +72,19 @@ class CredentialService extends Service {
      */
     async list({page = 0, pageSize = 10, ...queryParams}) {
         try {
-            let res = await await this.app.mysql.select('app_credential', {
-                where: queryParams,
-                limit: 10,
-                offset: page * pageSize,
+            let total = await this.app.mysql.count('app_credential',{
+                ...queryParams,
             })
-            return createResponse(res);
+            let sql = createSQL('select ac.*, ao.name as organization_name, ao.id as organization_id from app_credential ac left join app_organization ao on ac.organization_id = ao.id', {
+                where: queryParams,
+                limit: pageSize,
+                offset: page * pageSize,
+                like: ['credential_no'],
+                order: ['ac.create_time desc']
+            });
+            console.log(sql);
+            let res = await this.app.mysql.query(sql);
+            return createResponse({list: res, pagination: {currentPage: page, pageSize: pageSize, total}});
         } catch (err) {
             return createResponse(null, false, '查询凭证数据失败:' + err);
         }
